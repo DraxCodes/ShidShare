@@ -5,23 +5,20 @@ namespace ShidShare.Services
     public class LocalStorageService
     {
         private ProjectGlobals _projectGlobals;
+
         public LocalStorageService(ProjectGlobals projectGlobals)
         {
             _projectGlobals = projectGlobals;
         }
 
-        public async Task SaveImageAsync(IReadOnlyList<IBrowserFile> images)
+        public async Task SaveImageAsync(string path, IBrowserFile image)
         {
             //TODO Validations (FileSize, Count, Type)
 
-            foreach (var image in images)
-            {
-                var newFileName = $"{Path.GetRandomFileName()}.{image.Name.Split(".").Last()}";
 
-                await using FileStream fs = new(@$"{_projectGlobals.DefaultImageUploadLocation}\{newFileName}", FileMode.Create);
+                await using FileStream fs = new(path, FileMode.Create);
                 await image.OpenReadStream(maxAllowedSize: _projectGlobals.MaxUploadFileSize).CopyToAsync(fs);
                 await fs.FlushAsync();
-            }
         }
     }
 }
