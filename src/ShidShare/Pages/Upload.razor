@@ -8,28 +8,54 @@
 @inject NavigationManager NavigationManger
 
 <PageTitle>Upload Files</PageTitle>
-<MudText Typo="Typo.h3" GutterBottom="true">Upload</MudText>
 
-@if (!isLoading)
-{
-    <InputFile id="fileimageinput112" OnChange="UploadImageFiles" hidden multiple accept=".jpg, .jpeg, .png, .gif" />
+<MudContainer MaxWidth=MaxWidth.ExtraExtraLarge>
+    <MudPaper MinHeight="70vh" MinWidth="100%" Class="pa-16 ma-2" Elevation="3">
+        <MudText Typo="Typo.h3" GutterBottom="true">Upload</MudText>
 
-    <MudButton HtmlTag="label"
-           Variant="Variant.Filled"
-           Color="Color.Primary"
-           StartIcon="@Icons.Filled.CloudUpload"
-           for="fileimageinput112">
-        Upload Your Image Files
-    </MudButton>
-}
-else
-{
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-}
+        @if (!isLoading)
+        {
+            <InputFile id="fileimageinput112" OnChange="UploadImageFiles" hidden accept=".jpg, .jpeg, .png, .gif" />
+
+            <MudButton HtmlTag="label"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Filled.CloudUpload"
+                   for="fileimageinput112">
+                Upload Your Image Files
+            </MudButton>
+        }
+        else
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@TogglePopoverOpen">Open</MudButton>
+
+        @if (popoverOpen)
+        {
+            <MudPopover Open="@popoverOpen" Fixed="true" AnchorOrigin=Origin.BottomRight TransformOrigin=Origin.BottomRight Class="px-4 pt-4">
+                <div class="d-flex flex-column">
+                    <MudCard>
+                        <MudCardMedia Image="@newFileLocalLocation" Height="200" Style="border-radius: 8px; width: 350px;"/>
+                        <MudCardActions>
+                            <MudButton OnClick="@CopyUploadedFileUrlToClipboard" Variant="Variant.Text" Color="Color.Primary">Share</MudButton>
+                            <MudButton OnClick="@TogglePopoverOpen" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </div>
+            </MudPopover>
+        }
+
+    </MudPaper>
+</MudContainer>
 
 @code
 {
     bool isLoading = false;
+    bool popoverOpen = false;
+    string uploadedFilePath = string.Empty;
+    string newFileLocalLocation = string.Empty;
 
 
     private async Task UploadImageFiles(InputFileChangeEventArgs e)
@@ -45,12 +71,13 @@ else
             {
                 var newFileName = $"{Path.GetRandomFileName()}.{file.Name.Split(".").Last()}";
                 var path = @$"{Globals.DefaultImageUploadLocation}\{newFileName}";
+                uploadedFilePath = $"{NavigationManger.BaseUri}images/{newFileName}";
+                newFileLocalLocation = $"images/{newFileName}";
 
                 await LocalStorageService.SaveImageAsync(path, file);
 
-                await ClipboardService.WriteTextAsync($"{NavigationManger.BaseUri}images/{newFileName}");
-
-                Snackbar.Add($"Image Uploaded, Link Copied to Clipboard.", Severity.Success);
+                await CopyUploadedFileUrlToClipboard();
+                TogglePopoverOpen();
             }
         }
         catch (Exception ex)
@@ -60,4 +87,22 @@ else
 
         isLoading = false;
     }
+
+    public void TogglePopoverOpen()
+    {
+        if (popoverOpen)
+            popoverOpen = false;
+        else
+            popoverOpen = true;
+    }
+
+    private async Task CopyUploadedFileUrlToClipboard()
+    {
+        if (uploadedFilePath != null)
+        {
+            await ClipboardService.WriteTextAsync(uploadedFilePath);
+            Snackbar.Add($"Link Copied to Clipboard.", Severity.Success);
+        }
+    }
+
 }
