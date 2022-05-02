@@ -1,0 +1,60 @@
+﻿@page "/upload"
+@inject ISnackbar Snackbar
+@inject ProjectGlobals Globals
+
+<PageTitle>Upload Files</PageTitle>
+<MudText Typo="Typo.h3" GutterBottom="true">Upload</MudText>
+
+@if (!isLoading)
+{
+    <InputFile id="fileimageinput112" OnChange="UploadImageFiles" hidden multiple accept=".jpg, .jpeg, .png, .gif" />
+
+    <MudButton HtmlTag="label"
+           Variant="Variant.Filled"
+           Color="Color.Primary"
+           StartIcon="@Icons.Filled.CloudUpload"
+           for="fileimageinput112">
+        Upload Your Image Files
+    </MudButton>
+}
+else
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+}
+
+@code
+{
+    bool isLoading = false;
+    private long maxFileSize = 1024 * 1024 * 1024 * 2L; //2GB
+    private int maxAllowedFiles = 4;
+
+    private async Task UploadImageFiles(InputFileChangeEventArgs e)
+    {
+        isLoading = true;
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+
+        var files = e.GetMultipleFiles();
+
+        //TODO Validations (FileSize, Count, Type)
+
+        foreach (var file in files)
+        {
+            var newFileName = $"{Path.GetRandomFileName()}.{file.Name.Split(".").Last()}";
+            var test = $"{Globals.DefaultImageUploadLocation}/{newFileName}";
+            try
+            {
+                await using FileStream fs = new(@$"{Globals.DefaultImageUploadLocation}\{newFileName}", FileMode.Create);
+                await file.OpenReadStream(maxAllowedSize: maxFileSize).CopyToAsync(fs);
+                await fs.FlushAsync();
+
+                Snackbar.Add($"Image Uploaded {Globals.DefaultImageUploadLocation}", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+
+        isLoading = false;
+    }
+}
