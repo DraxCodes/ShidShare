@@ -1,6 +1,9 @@
 ﻿@page "/upload"
+@using ShidShare.Services
+
 @inject ISnackbar Snackbar
 @inject ProjectGlobals Globals
+@inject LocalStorageService LocalStorageService
 
 <PageTitle>Upload Files</PageTitle>
 <MudText Typo="Typo.h3" GutterBottom="true">Upload</MudText>
@@ -19,14 +22,13 @@
 }
 else
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
 }
 
 @code
 {
     bool isLoading = false;
-    private long maxFileSize = 1024 * 1024 * 1024 * 2L; //2GB
-    private int maxAllowedFiles = 4;
+
 
     private async Task UploadImageFiles(InputFileChangeEventArgs e)
     {
@@ -35,24 +37,14 @@ else
 
         var files = e.GetMultipleFiles();
 
-        //TODO Validations (FileSize, Count, Type)
-
-        foreach (var file in files)
+        try
         {
-            var newFileName = $"{Path.GetRandomFileName()}.{file.Name.Split(".").Last()}";
-            var test = $"{Globals.DefaultImageUploadLocation}/{newFileName}";
-            try
-            {
-                await using FileStream fs = new(@$"{Globals.DefaultImageUploadLocation}\{newFileName}", FileMode.Create);
-                await file.OpenReadStream(maxAllowedSize: maxFileSize).CopyToAsync(fs);
-                await fs.FlushAsync();
-
-                Snackbar.Add($"Image Uploaded {Globals.DefaultImageUploadLocation}", Severity.Success);
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
+            await LocalStorageService.SaveImageAsync(files);
+            Snackbar.Add($"Image Uploaded {Globals.DefaultImageUploadLocation}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
 
         isLoading = false;
