@@ -4,6 +4,8 @@
 @inject ISnackbar Snackbar
 @inject ProjectGlobals Globals
 @inject LocalStorageService LocalStorageService
+@inject ClipboardService ClipboardService
+@inject NavigationManager NavigationManger
 
 <PageTitle>Upload Files</PageTitle>
 <MudText Typo="Typo.h3" GutterBottom="true">Upload</MudText>
@@ -40,7 +42,8 @@ else
         try
         {
             await LocalStorageService.SaveImageAsync(files);
-            Snackbar.Add($"Image Uploaded {Globals.DefaultImageUploadLocation}", Severity.Success);
+            await ClipboardService.WriteTextAsync(NavigationManger.BaseUri);
+            Snackbar.Add($"Image Uploaded, Link Copied to Clipboard.", Severity.Success);
         }
         catch (Exception ex)
         {

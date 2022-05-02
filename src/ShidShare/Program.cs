@@ -11,6 +11,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<ProjectGlobals>();
 builder.Services.AddSingleton<LocalStorageService>();
+builder.Services.AddScoped<ClipboardService>();
 builder.Services.AddMudServices();
 
 var app = builder.Build();
